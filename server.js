@@ -41,13 +41,21 @@ app.post('/write', function(req, res) {
 });
 var messageFile = __dirname + '/messages.json';
 app.post('/sendMessage', function(req, res) {
-	fs.appendFile(messageFile, JSON.stringify(req.body), function(err, data) {
-		if (err) {
+	console.log("writing messages.json file");
+	fs.readFile(messageFile, 'utf8', function(readerr, readdata) {
+		if (readerr) {
 			console.log("error: " + err);
 			return;
 		}
-		console.log("message file written");
+		fs.writeFile(messageFile, readdata + JSON.stringify(req.body), function(err, data) {
+			if (err) {
+				console.log("error: " + err);
+				return;
+			}
+			console.log("message file written");
+		});
 	});
+	
 	res.send("success send Message!");
 });
 

@@ -42,19 +42,15 @@ app.post('/write', function(req, res) {
 var messageFile = __dirname + '/messages.json';
 app.post('/sendMessage', function(req, res) {
 	console.log("writing messages.json file");
-	fs.readFile(messageFile, 'utf8', function(readerr, readdata) {
-		if (readerr) {
+	
+	fs.appendFile(messageFile, readdata + JSON.stringify(req.body), function(err, data) {
+		if (err) {
 			console.log("error: " + err);
 			return;
 		}
-		fs.writeFile(messageFile, readdata + JSON.stringify(req.body), function(err, data) {
-			if (err) {
-				console.log("error: " + err);
-				return;
-			}
-			console.log("message file written");
-		});
+		console.log("message file written");
 	});
+	
 	
 	res.send("success send Message!");
 });
@@ -68,6 +64,30 @@ app.get('/getMessages', function(req, res) {
 		res.send(data);
 	});
 });
+
+
+var pg = require('pg');
+var localConnection = 'postgres://hwcfxbyewaiodb:CiLoioQgw8uajKojLfU5bW1VeQ@ec2-23-23-177-33.compute-1.amazonaws.com:5432/dgpekngq9m8hd';
+
+var connectionString = process.env.DATABASE_URL || localConnection;
+var client;
+var query;
+
+pg.connect(connectionString, function(err, client, done) {
+	if(err) {
+		return console.error('error fetching client from pool', err);
+	}
+	client.query('SELECT * from messages', function(err, result) {
+		//call `done()` to release the client back to the pool
+	    done();
+
+	    if(err) {
+	      return console.error('error running query', err);
+	    }
+	    console.log(result.rows[0].number);
+	});
+});
+
 var port = Number(process.env.PORT || 5000);
 app.listen(port, function() {
 	console.log("Listening on " + port);

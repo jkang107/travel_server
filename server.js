@@ -67,25 +67,19 @@ app.get('/getMessages', function(req, res) {
 
 
 var pg = require('pg');
-var localConnection = 'postgres://hwcfxbyewaiodb:CiLoioQgw8uajKojLfU5bW1VeQ@ec2-23-23-177-33.compute-1.amazonaws.com:5432/dgpekngq9m8hd';
+var localConnection = 'postgres://hwcfxbyewaiodb:CiLoioQgw8uajKojLfU5bW1VeQ@ec2-23-23-177-33.compute-1.amazonaws.com:5432/dgpekngq9m8hd?ssl=true';
 
 var connectionString = process.env.DATABASE_URL || localConnection;
-var client;
-var query;
 
-pg.connect(connectionString, function(err, client, done) {
+
+pg.connect(connectionString, function(err, client) {
 	if(err) {
 		return console.error('error fetching client from pool', err);
 	}
-	client.query('SELECT * from messages', function(err, result) {
-		//call `done()` to release the client back to the pool
-	    done();
-
-	    if(err) {
-	      return console.error('error running query', err);
-	    }
-	    console.log(result.rows[0].number);
-	});
+	var query = client.query('SELECT * FROM messages');
+	query.on('row', function(row) {
+		console.log(JSON.stringify(row));
+	})
 });
 
 var port = Number(process.env.PORT || 5000);

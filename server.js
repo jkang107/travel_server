@@ -40,28 +40,47 @@ app.post('/write', function(req, res) {
 	res.send(req.body);
 });
 var messageFile = __dirname + '/messages.json';
+
 app.post('/sendMessage', function(req, res) {
-	console.log("writing messages.json file");
-	
-	fs.appendFile(messageFile, readdata + JSON.stringify(req.body), function(err, data) {
-		if (err) {
-			console.log("error: " + err);
-			return;
+	var message = req.body;
+
+	pg.connect(connectionString, function(err, client) {
+		if(err) {
+			return console.error('error fetching client from pool', err);
 		}
-		console.log("message file written");
+		console.log(message.message);
+		var query = client.query("INSERT INTO messages (msg_id, name, message, time) VALUES (DEFAULT, '" 
+							+ JSON.stringify(message.name) + "', '"
+							+ JSON.stringify(message.message) + "', '" 
+							+ JSON.stringify(message.time) + "');",
+			function(err, result) {
+				if (err) {
+					console.log("ERROR: " + err);
+					return;
+				}
+				console.log("SUCCESS SEND!");
+				res.send("success send Message!");
+			
+		});
 	});
-	
-	
-	res.send("success send Message!");
 });
 
 app.get('/getMessages', function(req, res) {
-	fs.readFile(messageFile, 'utf8', function(err, data) {
-		if (err) {
-			console.log("error: " + err);
-			return;
+	pg.connect(connectionString, function(err, client) {
+		if(err) {
+			return console.error('error fetching client from pool', err);
 		}
-		res.send(data);
+		var query = client.query('SELECT * FROM messages');
+		var concatenated = "";
+		query.on('row', function(row) {
+			console.log(JSON.stringify(row));
+			concatenated += JSON.stringify(row);
+		});
+		query.on('end', function() {
+			res.send(concatenated);
+			client.end();
+		});
+		
 	});
 });
 
@@ -71,16 +90,6 @@ var localConnection = 'postgres://hwcfxbyewaiodb:CiLoioQgw8uajKojLfU5bW1VeQ@ec2-
 
 var connectionString = process.env.DATABASE_URL || localConnection;
 
-
-pg.connect(connectionString, function(err, client) {
-	if(err) {
-		return console.error('error fetching client from pool', err);
-	}
-	var query = client.query('SELECT * FROM messages');
-	query.on('row', function(row) {
-		console.log(JSON.stringify(row));
-	})
-});
 
 var port = Number(process.env.PORT || 5000);
 app.listen(port, function() {

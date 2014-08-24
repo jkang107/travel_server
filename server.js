@@ -56,11 +56,11 @@ app.post('/sendMessage', function(req, res) {
 			function(err, result) {
 				if (err) {
 					console.log("ERROR: " + err);
+					res.send("ERROR: " + err);
 					return;
 				}
 				console.log("SUCCESS SEND!");
 				res.send("success send Message!");
-			
 		});
 	});
 });
@@ -80,7 +80,6 @@ app.get('/getMessages', function(req, res) {
 			res.send(concatenated);
 			client.end();
 		});
-		
 	});
 });
 
